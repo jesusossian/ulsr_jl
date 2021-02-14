@@ -70,9 +70,9 @@ function standardFormulation(inst::InstanceData, params::ParameterData)
   @constraint(model, setup[t=1:N], x[t] <= sum(inst.D[k] for k in t:inst.N)*y[t])
 
   @constraint(model, setupR[t=1:N], xr[t] <= min(sum(inst.D[k] for k in t:N),sum(inst.R[k] for k in 1:t))*yr[t])
-#  @constraint(model, setupR[t=1:inst.N], xr[t] <= min(SD[1,t],SR[t,inst.N])*yr[t])
+  #@constraint(model, setupR[t=1:inst.N], xr[t] <= min(SD[1,t],SR[t,inst.N])*yr[t])
 
-  print(model)
+  #print(model)
 
   #write_to_file(model,"modelo.lp")
 
@@ -84,15 +84,14 @@ function standardFormulation(inst::InstanceData, params::ParameterData)
   numnodes = node_count(model)
   time = solve_time(model)
   gap = MOI.get(model, MOI.RelativeGap()) 
-#  gap = 100*(bestsol-bestbound)/bestsol
   
   open("saida.txt","a") do f
     write(f,";$(params.form);$bestbound;$bestsol;$gap;$time;$numnodes;$(params.disablesolver) \n")
   end
 
-#  if params.printsol == 1
-#    printStandardFormulationSolution(inst,x,y,s,xr,yr,sr)
-#  end
+  if params.printsol == 1
+    printStandardFormulationSolution(inst,x,y,s,xr,yr,sr)
+  end
 
 end #function standardFormulation()
 
