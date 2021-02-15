@@ -23,7 +23,6 @@ function readData(instanceFile,params)
   # read the problem's dimensions N
   aux = 1
   N = parse(Int,tokens[aux])
-  println("N = ", N)
 
   #resize data structures according to N
   H = zeros(Float64,N)
