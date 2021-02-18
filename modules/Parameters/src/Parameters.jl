@@ -18,7 +18,7 @@ function readInputParameters(ARGS)
   ### Set standard values for the parameters ###
   instName = "instances/sifaleras/52_1.txt"
   form = "std"
-  mip = 0
+  mip = 1
   solver = "Gurobi"
   maxtime = 60
   tolgap = 0.000001
