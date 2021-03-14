@@ -2,8 +2,8 @@ module Parameters
 
 struct ParameterData
   instName::String
-  form::String
-  mip::Int
+  method::String ### mip, rf
+  form::String ### std
   solver::String
   maxtime::Int
   tolgap::Float64
@@ -20,11 +20,11 @@ export ParameterData, readInputParameters
 
 function readInputParameters(ARGS)
   ### Set standard values for the parameters ###
-  instName = "instances/sifaleras/52_2.txt"
+  instName = "instances/sifaleras/52_1.txt"
+  method = "rf"
   form = "std"
-  mip = 1
   solver = "Gurobi"
-  maxtime = 10
+  maxtime = 3600
   tolgap = 0.000001
   printsol = 0
   disablesolver = 0
@@ -32,7 +32,7 @@ function readInputParameters(ARGS)
 
   horsizerf = 3
   fixsizerf = 2
-  maxtimerf = 360
+  maxtimerf = 60
   tolgaprf = 0.0001
 
   ### Read the parameters and set correct values whenever provided ###
@@ -40,11 +40,11 @@ function readInputParameters(ARGS)
     if ARGS[param] == "--inst"
       instName = ARGS[param+1]
       param += 1
-    elseif ARGS[param] == "--form"
-      form = ARGS[param+1]
+    elseif ARGS[param] == "--method"
+      method = ARGS[param+1]
       param += 1
-    elseif ARGS[param] == "--mip"
-      mip = parse(Int,ARGS[param+1])
+    elseif ARGS[param] == "--form"
+      form = parse(Int,ARGS[param+1])
       param += 1
     elseif ARGS[param] == "--solver"
       solver = ARGS[param+1]
@@ -79,7 +79,7 @@ function readInputParameters(ARGS)
     end
   end
 
-  params = ParameterData(instName,form,mip,solver,maxtime,tolgap,printsol,disablesolver,maxnodes,horsizerf,fixsizerf,maxtimerf,tolgaprf)
+  params = ParameterData(instName,method,form,solver,maxtime,tolgap,printsol,disablesolver,maxnodes,horsizerf,fixsizerf,maxtimerf,tolgaprf)
 
   return params
 

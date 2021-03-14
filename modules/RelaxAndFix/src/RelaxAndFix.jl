@@ -10,19 +10,23 @@ export RelaxAndFixStandardFormulation
 
 function RelaxAndFixStandardFormulation(inst::InstanceData, params)
   println("Running RelaxAndFix.RelaxAndFixStandardFormulation")
+  
+  N = inst.N
 
-  nbsubprob = ceil(inst.NT/params.fixsizerf)
+  nbsubprob = ceil(N/params.fixsizerf)
   maxtimesubprob = params.maxtimerf/nbsubprob
 
   ### select solver ###
   if params.solver == "Gurobi"
     model = Model(Gurobi.Optimizer)
-    set_optimizer_attribute(model, "TimeLimit", params.maxtimerf) # Time limit
-    set_optimizer_attribute(model, "MIPGap", params.tolgaprf) # Relative MIP optimality gap
+    set_optimizer_attribute(model, "TimeLimit", params.maxtimerf)
+    set_optimizer_attribute(model, "MIPGap", params.tolgaprf)
+    set_optimizer_attribute(model, "Threads", 1)
   elseif params.solver == "Cplex"
     model = Model(Cplex.Optimizer)
     set_optimizer_attribute(model, "CPX_PARAM_TILIM", params.maxtimerf)
     set_optimizer_attribute(model, "CPX_PARAM_EPGAP", params.tolgaprf)
+    set_optimizer_attribute(model, "Threads", 1)
   else
     println("No solver selected")
     return 0
@@ -55,67 +59,108 @@ function RelaxAndFixStandardFormulation(inst::InstanceData, params)
   
   #@constraint(model, setupR[t=1:inst.N], xr[t] <= min(SD[1,t],SR[t,inst.N])*yr[t])
 
+  undo_relax = relax_integrality(model)
+  
   ## set k and kprime according to the initial parameters
   k = params.horsizerf
   kprime = params.fixsizerf
 
   elapsedtime = 0
   alpha = 1
-  beta = min(alpha + k - 1, inst.NT)
-  while(beta <= inst.NT)
-    println("RELAX AND FIX [$(alpha), $(beta)]")
+  beta = min(alpha + k - 1, N)
+  
+  while(beta <= N)
+  
+    println("********** RELAX AND FIX [$(alpha), $(beta)] **********")
     t1 = time_ns()
+    
     if(alpha > 1)
-      println("\n\n Fixed variables")
-      ### Define fixed variables ###
+    
+      println("%%%%%%%%%% Fixed variables %%%%%%%%%%")
+      
+      ### Define fixed variables y ###
       for t in 1:alpha-1
         if value(y[t]) >= 0.9
-          #println("binary variable: ", is_binary(y[i,p,t]))
+          #println("binary variable: ", is_binary(y[t]))
           if is_binary(y[t])
             unset_binary(y[t])
           end
-          set_lower_bound(y[i,p,t],1.0)
+          set_lower_bound(y[t],1.0)
         end
       end
+      
+      ### Define fixed variables yr ###
+      for t in 1:alpha-1
+        if value(yr[t]) >= 0.9
+          #println("binary variable: ", is_binary(yr[t]))
+          if is_binary(yr[t])
+            unset_binary(yr[t])
+          end
+          set_lower_bound(yr[t],1.0)
+        end
+      end
+
     end
 
-    println("\n\n Integer variables")
-    ### Define integer variables ###
+    println("%%%%%%%%%% Integer variables %%%%%%%%%%")
+    ### Define integer variables y ###
     for t in alpha:beta
       #setcategory(y[t],:Bin) #why ?
       #println(is_binary(y[t]))
       set_binary(y[t])
     end
+    
+    ### Define integer variables yr ###
+    for t in alpha:beta
+      #setcategory(yr[t],:Bin) #why ?
+      #println(is_binary(yr[t]))
+      set_binary(yr[t])
+    end
 
-    for t in beta+1:inst.NT
+    println("%%%%%%%%%% Relax variables %%%%%%%%%%")
+    ### Define relax variables y ###
+    for t in beta+1:N
       #setcategory(y[t],:Cont) # why ?
       #println("binary: ",is_binary(y[t]))
       #println("integer: ",is_integer(y[t]))
       if is_binary(y[t]) == true
         unset_binary(y[t])
       end
-      if is_integer(y[t]) == true
-        unset_integer(y[i,p,t])
-      end 
+      #if is_integer(y[t]) == true
+      #  unset_integer(y[t])
+      #end 
+    end
+
+    ### Define relax variables yr ###
+    for t in beta+1:N
+      #setcategory(yr[t],:Cont) # why ?
+      #println("binary: ",is_binary(yr[t]))
+      #println("integer: ",is_integer(yr[t]))
+      if is_binary(yr[t]) == true
+        unset_binary(yr[t])
+      end
+      #if is_integer(yr[t]) == true
+      #  unset_integer(yr[i,p,t])
+      #end 
     end
 
     status = optimize!(model)
 
     alpha = alpha + kprime
-    if beta == inst.NT
-      beta = inst.NT+1
+    if beta == N
+      beta = N+1
     else
-      beta = min(alpha + k -1,inst.NT)
+      beta = min(alpha + k -1,N)
     end
     t2 = time_ns()
     elapsedtime += (t2-t1)/1.0e9
-    println("Elapsed ",elapsedtime)
+    #println("Elapsed ",elapsedtime)
 
   end
 
   bestsol = objective_value(model)
-  ysol = ones(Int,inst.NT)
-  for t in 1:inst.NT
+  ysol = ones(Int,N)
+  for t in 1:N
     if value(y[t]) >= 0.99
       ysol[t] = 1
     else
@@ -124,7 +169,7 @@ function RelaxAndFixStandardFormulation(inst::InstanceData, params)
   end
 
   ### Reset integrality requirements and bounds to default
-  for t in 1:inst.NT
+  for t in 1:N
     #setcategory(y[t],:Bin) #why?
     #set_lower_bound(y[t],0.0)
     if is_binary(y[t])
@@ -132,7 +177,16 @@ function RelaxAndFixStandardFormulation(inst::InstanceData, params)
     end
     set_lower_bound(y[t],0.0)
   end
-
+  
+  for t in 1:N
+    #setcategory(yr[t],:Bin) #why?
+    #set_lower_bound(yr[t],0.0)
+    if is_binary(yr[t])
+      unset_binary(yr[t])
+    end
+    set_lower_bound(yr[t],0.0)
+  end
+  
   return ysol, bestsol
 
 end

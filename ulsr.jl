@@ -20,8 +20,11 @@ params = Parameters.readInputParameters(ARGS)
 # Read instance data
 inst = Data.readData(params.instName,params)
 
-if params.form == "std"
-  Formulations.standardFormulation(inst, params)
+if (params.method == "mip")
+  if params.form == "std"
+    Formulations.standardFormulation(inst, params)
+  end
 elseif (params.method == "rf")
-  ysol,bestsol = RelaxAndFix.RelaxAndFixStandardFormulation(inst, params)
+  ysol, bestsol = RelaxAndFix.RelaxAndFixStandardFormulation(inst, params)
+  println("Bestsol = $(bestsol)");
 end

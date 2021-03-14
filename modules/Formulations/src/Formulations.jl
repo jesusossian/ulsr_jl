@@ -39,7 +39,7 @@ function standardFormulation(inst::InstanceData, params::ParameterData)
     set_optimizer_attribute(model, "TimeLimit", params.maxtime) # Time limit
     set_optimizer_attribute(model, "MIPGap", params.tolgap) # Relative MIP optimality gap
     set_optimizer_attribute(model, "NodeLimit", params.maxnodes) # MIP node limit
-    set_optimizer_attribute(model, "Cuts", 3) # Global cut aggressiveness setting. 
+#    set_optimizer_attribute(model, "Cuts", 2) # Global cut aggressiveness setting. 
     # Use value 0 to shut off cuts, 1 for moderate cut generation, 2 for aggressive cut generation, and 3 for very aggressive cut generation. 
     # This parameter is overridden by the parameters that control individual cut types (e.g., CliqueCuts).
     # Only affects mixed integer programming (MIP) models
@@ -55,7 +55,7 @@ function standardFormulation(inst::InstanceData, params::ParameterData)
     # Controls the branch variable selection strategy. 
     # The default -1 setting makes an automatic choice, depending on problem characteristics. 
     # Available alternatives are Pseudo Reduced Cost Branching (0), Pseudo Shadow Price Branching (1), Maximum Infeasibility Branching (2), and Strong Branching (3).
- #   set_optimizer_attribute(model, "NodeMethod", -1) # Method used to solve MIP node relaxations
+    #set_optimizer_attribute(model, "NodeMethod", 0) # Method used to solve MIP node relaxations
     # Algorithm used for MIP node relaxations (except for the root node, see Method). 
     # Options are: -1=automatic, 0=primal simplex, 1=dual simplex, and 2=barrier. 
     # Note that barrier is not an option for MIQP node relaxations.
@@ -70,7 +70,7 @@ function standardFormulation(inst::InstanceData, params::ParameterData)
 #    set_optimizer_attribute(model, "Method", -1)
     # Algorithm used to solve continuous models or the root node of a MIP model. 
     # Options are: -1=automatic, 0=primal simplex, 1=dual simplex, 2=barrier, 3=concurrent, 4=deterministic concurrent, 5=deterministic concurrent simplex.
-#    set_optimizer_attribute(model, "Threads", 1)
+    set_optimizer_attribute(model, "Threads", 1)
     # Controls the number of threads to apply to parallel algorithms (concurrent LP, parallel barrier, parallel MIP, etc.). 
     # The default value of 0 is an automatic setting. 
     # It will generally use all of the cores in the machine, but it may choose to use fewer.
@@ -112,7 +112,7 @@ function standardFormulation(inst::InstanceData, params::ParameterData)
 
   #print(model)
 
-  if params.mip == 0 
+  if params.method == "lp" 
     undo_relax = relax_integrality(model)
   end
 
@@ -131,7 +131,7 @@ function standardFormulation(inst::InstanceData, params::ParameterData)
     
   ### get solutions ###
   bestsol = objective_value(model)
-  if params.mip == 1
+  if params.method == "mip"
     bestbound = objective_bound(model)
     numnodes = node_count(model)
     gap = MOI.get(model, MOI.RelativeGap())
@@ -140,7 +140,7 @@ function standardFormulation(inst::InstanceData, params::ParameterData)
   
   ### print solutions ###
   open("saida.txt","a") do f
-    if params.mip == 1
+    if params.method == "mip"
       write(f,";$(params.form);$bestbound;$bestsol;$gap;$time;$numnodes;$(params.disablesolver) \n")
     else
       write(f,";$(params.form);$bestsol;$time;$(params.disablesolver) \n")
