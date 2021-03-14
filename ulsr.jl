@@ -12,6 +12,7 @@ using CPLEX
 import Data
 import Parameters
 import Formulations
+import RelaxAndFix
 
 # Read the parameters from command line
 params = Parameters.readInputParameters(ARGS)
@@ -21,4 +22,6 @@ inst = Data.readData(params.instName,params)
 
 if params.form == "std"
   Formulations.standardFormulation(inst, params)
+elseif (params.method == "rf")
+  ysol,bestsol = RelaxAndFix.RelaxAndFixStandardFormulation(inst, params)
 end

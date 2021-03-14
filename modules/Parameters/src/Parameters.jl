@@ -10,21 +10,30 @@ struct ParameterData
   printsol::Int
   disablesolver::Int
   maxnodes::Int
+  horsizerf::Int
+  fixsizerf::Int
+  maxtimerf::Int
+  tolgaprf::Float64
 end
 
 export ParameterData, readInputParameters
 
 function readInputParameters(ARGS)
   ### Set standard values for the parameters ###
-  instName = "instances/sifaleras/52_1.txt"
+  instName = "instances/sifaleras/52_2.txt"
   form = "std"
   mip = 1
   solver = "Gurobi"
-  maxtime = 60
+  maxtime = 10
   tolgap = 0.000001
   printsol = 0
   disablesolver = 0
   maxnodes = 10000000.0
+
+  horsizerf = 3
+  fixsizerf = 2
+  maxtimerf = 360
+  tolgaprf = 0.0001
 
   ### Read the parameters and set correct values whenever provided ###
   for param in 1:length(ARGS)
@@ -55,10 +64,22 @@ function readInputParameters(ARGS)
     elseif ARGS[param] == "--maxnodes"
       maxnodes = parse(Float64,ARGS[param+1])
       param += 1
+    elseif ARGS[param] == "--horsizerf"
+      horsizerf = parse(Int,ARGS[param+1])
+      param += 1
+    elseif ARGS[param] == "--fixsizerf"
+      fixsizerf = parse(Int,ARGS[param+1])
+      param += 1
+    elseif ARGS[param] == "--maxtimerf"
+      maxtimerf = parse(Int,ARGS[param+1])
+      param += 1
+    elseif ARGS[param] == "--tolgaprf"
+      tolgaprf = parse(Float64,ARGS[param+1])
+      param += 1
     end
   end
 
-  params = ParameterData(instName,form,mip,solver,maxtime,tolgap,printsol,disablesolver,maxnodes)
+  params = ParameterData(instName,form,mip,solver,maxtime,tolgap,printsol,disablesolver,maxnodes,horsizerf,fixsizerf,maxtimerf,tolgaprf)
 
   return params
 
