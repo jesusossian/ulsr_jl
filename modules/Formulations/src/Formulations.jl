@@ -85,12 +85,12 @@ function standardFormulation(inst::InstanceData, params::ParameterData)
   end
 
   ### variables ###
-  @variable(model,0 <= x[t=1:N] <= Inf)
-  @variable(model,0 <= xr[t=1:N] <= Inf)
+  @variable(model, 0 <= x[t=1:N] <= Inf)
+  @variable(model, 0 <= xr[t=1:N] <= Inf)
   @variable(model, y[t=1:N], Bin)
   @variable(model, yr[t=1:N], Bin)
-  @variable(model,0 <= s[t=1:N] <= Inf)
-  @variable(model,0 <= sr[t=1:N] <= Inf)
+  @variable(model, 0 <= s[t=1:N] <= Inf)
+  @variable(model, 0 <= sr[t=1:N] <= Inf)
 
   ### objective function ###
   @objective(model, Min, sum(inst.P[t]*x[t] + inst.H[t]*s[t] + inst.F[t]*y[t] for t=1:N) + sum(inst.PR[t]*xr[t] + inst.HR[t]*sr[t] + inst.FR[t]*yr[t] for t=1:N))
@@ -141,9 +141,9 @@ function standardFormulation(inst::InstanceData, params::ParameterData)
   ### print solutions ###
   open("saida.txt","a") do f
     if params.method == "mip"
-      write(f,";$(params.form);$bestbound;$bestsol;$gap;$time;$numnodes;$(params.disablesolver) \n")
+      write(f,";$(params.form);$bestbound;$bestsol;$gap;$time;$numnodes\n")
     else
-      write(f,";$(params.form);$bestsol;$time;$(params.disablesolver) \n")
+      write(f,";$(params.form);$bestsol;$time \n")
     end
   end
   

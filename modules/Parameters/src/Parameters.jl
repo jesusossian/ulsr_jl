@@ -2,7 +2,7 @@ module Parameters
 
 struct ParameterData
   instName::String
-  method::String ### mip, rf
+  method::String ### mip, rf, rffo
   form::String ### std
   solver::String
   maxtime::Int
@@ -14,6 +14,12 @@ struct ParameterData
   fixsizerf::Int
   maxtimerf::Int
   tolgaprf::Float64
+  horsizefo::Int
+  fixsizefo::Int
+  maxhorsizefo::Int
+  maxfixsizefo::Int
+  maxtimefo::Int
+  tolgapfo::Float64
 end
 
 export ParameterData, readInputParameters
@@ -21,7 +27,7 @@ export ParameterData, readInputParameters
 function readInputParameters(ARGS)
   ### Set standard values for the parameters ###
   instName = "instances/sifaleras/52_1.txt"
-  method = "rf"
+  method = "rffo"
   form = "std"
   solver = "Gurobi"
   maxtime = 3600
@@ -32,8 +38,15 @@ function readInputParameters(ARGS)
 
   horsizerf = 3
   fixsizerf = 2
-  maxtimerf = 60
-  tolgaprf = 0.0001
+  maxtimerf = 360
+  tolgaprf = 0.000001
+  
+  horsizefo = 3
+  maxhorsizefo = 3
+  fixsizefo = 2
+  maxfixsizefo = 2
+  maxtimefo = 360
+  tolgapfo = 0.000001
 
   ### Read the parameters and set correct values whenever provided ###
   for param in 1:length(ARGS)
@@ -76,10 +89,28 @@ function readInputParameters(ARGS)
     elseif ARGS[param] == "--tolgaprf"
       tolgaprf = parse(Float64,ARGS[param+1])
       param += 1
+    elseif ARGS[param] == "--horsizefo"
+      horsizefo = parse(Int,ARGS[param+1])
+      param += 1
+    elseif ARGS[param] == "--fixsizefo"
+      fixsizefo = parse(Int,ARGS[param+1])
+      param += 1
+    elseif ARGS[param] == "--maxhorsizefo"
+      maxhorsizefo = parse(Int,ARGS[param+1])
+      param += 1
+    elseif ARGS[param] == "--maxfixsizefo"
+      maxfixsizefo = parse(Int,ARGS[param+1])
+      param += 1
+    elseif ARGS[param] == "--maxtimefo"
+      maxtimefo = parse(Int,ARGS[param+1])
+      param += 1
+    elseif ARGS[param] == "--tolgapfo"
+      tolgapfo = parse(Float64,ARGS[param+1])
+      param += 1
     end
   end
 
-  params = ParameterData(instName,method,form,solver,maxtime,tolgap,printsol,disablesolver,maxnodes,horsizerf,fixsizerf,maxtimerf,tolgaprf)
+  params = ParameterData(instName, method, form, solver, maxtime, tolgap, printsol, disablesolver, maxnodes, horsizerf, fixsizerf,maxtimerf, tolgaprf, horsizefo, fixsizefo, maxhorsizefo, maxfixsizefo, maxtimefo, tolgapfo)
 
   return params
 

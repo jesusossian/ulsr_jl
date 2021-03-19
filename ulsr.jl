@@ -13,18 +13,21 @@ import Data
 import Parameters
 import Formulations
 import RelaxAndFix
+import FixAndOptimize
 
 # Read the parameters from command line
 params = Parameters.readInputParameters(ARGS)
 
 # Read instance data
-inst = Data.readData(params.instName,params)
+inst = Data.readData(params.instName, params)
 
 if (params.method == "mip")
   if params.form == "std"
     Formulations.standardFormulation(inst, params)
   end
-elseif (params.method == "rf")
-  ysol, bestsol = RelaxAndFix.RelaxAndFixStandardFormulation(inst, params)
-  println("Bestsol = $(bestsol)");
+elseif (params.method == "rf" || params.method ==  "rffo")
+  ysol, bestsol, timerf = RelaxAndFix.RelaxAndFixStandardFormulation(inst, params)
+  if params.method == "rffo"
+    FixAndOptimize.FixAndOptimizeStandardFormulation(inst, params, ysol, bestsol, timerf)
+  end
 end

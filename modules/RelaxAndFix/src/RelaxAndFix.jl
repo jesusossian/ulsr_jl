@@ -9,7 +9,6 @@ using Parameters
 export RelaxAndFixStandardFormulation
 
 function RelaxAndFixStandardFormulation(inst::InstanceData, params)
-  println("Running RelaxAndFix.RelaxAndFixStandardFormulation")
   
   N = inst.N
 
@@ -65,7 +64,7 @@ function RelaxAndFixStandardFormulation(inst::InstanceData, params)
   k = params.horsizerf
   kprime = params.fixsizerf
 
-  elapsedtime = 0
+  time = 0
   alpha = 1
   beta = min(alpha + k - 1, N)
   
@@ -81,7 +80,6 @@ function RelaxAndFixStandardFormulation(inst::InstanceData, params)
       ### Define fixed variables y ###
       for t in 1:alpha-1
         if value(y[t]) >= 0.9
-          #println("binary variable: ", is_binary(y[t]))
           if is_binary(y[t])
             unset_binary(y[t])
           end
@@ -92,7 +90,6 @@ function RelaxAndFixStandardFormulation(inst::InstanceData, params)
       ### Define fixed variables yr ###
       for t in 1:alpha-1
         if value(yr[t]) >= 0.9
-          #println("binary variable: ", is_binary(yr[t]))
           if is_binary(yr[t])
             unset_binary(yr[t])
           end
@@ -105,43 +102,27 @@ function RelaxAndFixStandardFormulation(inst::InstanceData, params)
     println("%%%%%%%%%% Integer variables %%%%%%%%%%")
     ### Define integer variables y ###
     for t in alpha:beta
-      #setcategory(y[t],:Bin) #why ?
-      #println(is_binary(y[t]))
       set_binary(y[t])
     end
     
     ### Define integer variables yr ###
     for t in alpha:beta
-      #setcategory(yr[t],:Bin) #why ?
-      #println(is_binary(yr[t]))
       set_binary(yr[t])
     end
 
     println("%%%%%%%%%% Relax variables %%%%%%%%%%")
     ### Define relax variables y ###
     for t in beta+1:N
-      #setcategory(y[t],:Cont) # why ?
-      #println("binary: ",is_binary(y[t]))
-      #println("integer: ",is_integer(y[t]))
       if is_binary(y[t]) == true
         unset_binary(y[t])
       end
-      #if is_integer(y[t]) == true
-      #  unset_integer(y[t])
-      #end 
     end
 
     ### Define relax variables yr ###
     for t in beta+1:N
-      #setcategory(yr[t],:Cont) # why ?
-      #println("binary: ",is_binary(yr[t]))
-      #println("integer: ",is_integer(yr[t]))
       if is_binary(yr[t]) == true
         unset_binary(yr[t])
       end
-      #if is_integer(yr[t]) == true
-      #  unset_integer(yr[i,p,t])
-      #end 
     end
 
     status = optimize!(model)
@@ -153,9 +134,7 @@ function RelaxAndFixStandardFormulation(inst::InstanceData, params)
       beta = min(alpha + k -1,N)
     end
     t2 = time_ns()
-    elapsedtime += (t2-t1)/1.0e9
-    #println("Elapsed ",elapsedtime)
-
+    time += (t2-t1)/1.0e9
   end
 
   bestsol = objective_value(model)
@@ -170,8 +149,6 @@ function RelaxAndFixStandardFormulation(inst::InstanceData, params)
 
   ### Reset integrality requirements and bounds to default
   for t in 1:N
-    #setcategory(y[t],:Bin) #why?
-    #set_lower_bound(y[t],0.0)
     if is_binary(y[t])
       unset_binary(y[t])
     end
@@ -179,15 +156,20 @@ function RelaxAndFixStandardFormulation(inst::InstanceData, params)
   end
   
   for t in 1:N
-    #setcategory(yr[t],:Bin) #why?
-    #set_lower_bound(yr[t],0.0)
     if is_binary(yr[t])
       unset_binary(yr[t])
     end
     set_lower_bound(yr[t],0.0)
   end
   
-  return ysol, bestsol
+  ### print solutions ###
+  if params.method == "rf"
+    open("saida.txt","a") do f
+      write(f,";$(params.method);$bestsol;$time\n")
+    end
+  end
+  
+  return ysol, bestsol, time
 
 end
 
