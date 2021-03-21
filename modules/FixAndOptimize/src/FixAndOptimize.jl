@@ -14,6 +14,9 @@ function FixAndOptimizeStandardFormulation(inst::InstanceData, params, ysol, bes
   
   bestsolrf = bestsol
   
+  maxfixsizefo = params.fixsizefo
+  maxhorsizefo = params.horsizefo
+  
   nbsubprob = ceil(N/params.fixsizefo)
   maxtimesubprob = params.maxtimefo/nbsubprob
 
@@ -34,7 +37,6 @@ function FixAndOptimizeStandardFormulation(inst::InstanceData, params, ysol, bes
   end
 
   ### Defining variables ###
-  ### variables ###
   @variable(model, 0 <= x[t=1:N] <= Inf)
   @variable(model, 0 <= xr[t=1:N] <= Inf)
   @variable(model, y[t=1:N], Bin)
@@ -60,8 +62,6 @@ function FixAndOptimizeStandardFormulation(inst::InstanceData, params, ysol, bes
   
   #@constraint(model, setupR[t=1:inst.N], xr[t] <= min(SD[1,t],SR[t,inst.N])*yr[t])
 
-  undo_relax = relax_integrality(model)
-
   ### Fix and optimize ###
   println("********** FIX AND OPTIMIZE **********")
 
@@ -79,35 +79,40 @@ function FixAndOptimizeStandardFormulation(inst::InstanceData, params, ysol, bes
     set_start_value(y[t], ysol[t])
   end
 
-  for it2 in kprime:maxkprime
-    #println(kprime, "  ", maxkprime)
-    #println(k, " ", kprime+1, " <? ", maxk)
+  for i in kprime:maxkprime
+    println(kprime, "  ", maxkprime)
+    println(k, " ", kprime+1, " <? ", maxk)
     
-    for it in max(k, kprime+1):maxk
-      println("########## RESTARTING FIX AND OPTIMIZE with k=$(it) and kprime=$(it2) ##########")
+    for j in max(k, kprime+1):maxk
+    
+      println("########## RESTARTING FIX AND OPTIMIZE with k=$(i) and kprime=$(j) ##########")
+
       proceed = true
     
       while (proceed && time + maxtimesubprob <= params.maxtimefo )
+      
         proceed = false
         
         alpha = 1
     	beta = min(alpha + k - 1, N)
     
     	while(beta <= N && time + maxtimesubprob <= params.maxtimefo)
+    	  
     	  println("########## FIX AND OPTIMIZE [$(alpha), $(beta)] ##########")
           
           t1 = time_ns()
           
           for t in 1:N
             if ysol[t] == 1
-              set_lower_bound(y[t], 1) ## problem
+              set_lower_bound(y[t], 1)
             else
-		      set_lower_bound(y[t], 0) ## problem
+		      set_upper_bound(y[t], 0)
             end
     	  end
 		  
           for t in alpha:beta
-    	    set_lower_bound(y[t], 0) ## problem
+    	    set_upper_bound(y[t], 1) 
+    	    set_lower_bound(y[t], 0)
 		  end
 
 		  optimize!(model)
@@ -118,7 +123,8 @@ function FixAndOptimizeStandardFormulation(inst::InstanceData, params, ysol, bes
     		  proceed = true
     		end
     
-    		bestsol = objective_value(model)   
+    		bestsol = objective_value(model)
+    		
     	    for t in 1:N
               if value(y[t]) >= 0.99
     	        ysol[t] = 1
@@ -126,10 +132,11 @@ function FixAndOptimizeStandardFormulation(inst::InstanceData, params, ysol, bes
     			ysol[t] = 0
     		  end
             end
-            
+         
           end
 
           alpha = alpha + kprime
+          
 		  if beta == N
 		    beta = N+1
 		  else
