@@ -33,7 +33,7 @@ Parametros do relax-and-fix:
   tolgaprf = 0.000001
   
 Método fix-and-optimize
-  method = "rf"
+  method = "rffo"
   
 Parametros do fix-and-optimize
   horsizefo = 3
@@ -42,3 +42,9 @@ Parametros do fix-and-optimize
   maxfixsizefo = 2
   maxtimefo = 360
   tolgapfo = 0.000001
+  
+
+Julia 1.5.3
+"Gurobi" => v"0.9.11"
+"CPLEX"  => v"0.7.6"
+"JuMP"   => v"0.21.6"
